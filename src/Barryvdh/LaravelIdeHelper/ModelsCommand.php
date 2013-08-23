@@ -232,13 +232,13 @@ class ModelsCommand extends Command {
                    }
                }elseif(\Str::startsWith($method, 'scope') && $method !== 'scopeQuery'){
                    //Magic set<name>Attribute
-                   $name =  \Str::camel(substr($method, 5));
+                   $name =  \Str::snake(substr($method, 5));
                    if(!empty($name)){
                        $reflection = new \ReflectionMethod($model, $method);
                        $args = $this->getParameters($reflection);
                        //Remove the first ($query) argument
                        array_shift($args);
-                       $this->setMethod($name, 'static', $args);
+                       $this->setMethod($name, "static " . $reflection->class, $args);
                    }
                }elseif(!method_exists('Eloquent', $method) && !\Str::startsWith($method, 'get')){
 
