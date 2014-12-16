@@ -168,7 +168,7 @@ class ModelsCommand extends Command
                         throw new \Exception($name . ' is not instanciable.');
                     }
 
-                    $model = \App::make($name);
+                    $model = new $name();
                     if ($hasDoctrine) {
                         $this->getPropertiesFromTable($model);
                     }
