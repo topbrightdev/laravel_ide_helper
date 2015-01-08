@@ -254,8 +254,8 @@ class ModelsCommand extends Command
                     }
                 }
 
-
-                $this->setProperty($name, $type, true, true);
+                $comment = $column->getComment();
+                $this->setProperty($name, $type, true, true,$comment);
                 $this->setMethod(
                     Str::camel("where_" . $name),
                     '\Illuminate\Database\Query\Builder|\\' . get_class($model),
@@ -331,9 +331,9 @@ class ModelsCommand extends Command
                         $search = '$this->' . $relation . '(';
                         if ($pos = stripos($code, $search)) {
                             $code = substr($code, $pos + strlen($search));
-                            $arguments = explode(',', substr($code, 0, strpos($code, ');')));
+                            $arguments = explode(',', substr($code, 0, stripos($code, ')')));
                             //Remove quotes, ensure 1 \ in front of the model
-                            $returnModel = $this->getClassName($arguments[0], $model);
+                            $returnModel = $this->getClassName($arguments[0]);
                             if ($relation === "belongsToMany" or $relation === 'hasMany' or $relation === 'morphMany' or $relation === 'morphToMany') {
                                 //Collection or array of models (because Collection is Arrayable)
                                 $this->setProperty(
@@ -359,8 +359,9 @@ class ModelsCommand extends Command
      * @param string|null $type
      * @param bool|null $read
      * @param bool|null $write
+     * @param string|null $comment
      */
-    protected function setProperty($name, $type = null, $read = null, $write = null)
+    protected function setProperty($name, $type = null, $read = null, $write = null,$comment=null)
     {
         if (!isset($this->properties[$name])) {
             $this->properties[$name] = array();
@@ -376,6 +377,9 @@ class ModelsCommand extends Command
         }
         if ($write !== null) {
             $this->properties[$name]['write'] = $write;
+        }
+        if ($comment !== null ) {
+            $this->properties[$name]['comment'] = $comment;
         }
     }
 
@@ -433,7 +437,8 @@ class ModelsCommand extends Command
             } else {
                 $attr = 'property-read';
             }
-            $tag = Tag::createInstance("@{$attr} {$property['type']} {$name}", $phpdoc);
+            $comment = isset($property['comment'])?$property['comment']:'';
+            $tag = Tag::createInstance("@{$attr} {$property['type']} {$name} {$comment}", $phpdoc);
             $phpdoc->appendTag($tag);
         }
 
@@ -507,19 +512,9 @@ class ModelsCommand extends Command
         return $paramsWithDefault;
     }
 
-    /**
-     * @param string $className
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @return string
-     */
-    private function getClassName($className, $model)
+    private function getClassName($className)
     {
-        // If the class name was resolved via get_class($this) or static::class
-        if(strpos($className, 'get_class($this)') !== false || strpos($className, 'static::class') !== false) {
-            return get_class($model);
-        }
-
-        // If the class name was resolved via ::class (PHP 5.5+)
+        // If the class name was resovled via ::class (PHP 5.5+)
         if(strpos($className, '::class') !== false) {
             $end = -1 * strlen('::class');
             return substr($className, 0, $end);
