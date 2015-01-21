@@ -168,10 +168,12 @@ class ModelsCommand extends Command
                         throw new \Exception($name . ' is not instantiable.');
                     }
 
-                    $model = new $name();
+                    $model = $this->laravel->make($name);
+
                     if ($hasDoctrine) {
                         $this->getPropertiesFromTable($model);
                     }
+
                     $this->getPropertiesFromMethods($model);
                     $output .= $this->createPhpDocs($name);
                 } catch (\Exception $e) {
@@ -254,8 +256,8 @@ class ModelsCommand extends Command
                     }
                 }
 
-                $comment = $column->getComment();
-                $this->setProperty($name, $type, true, true,$comment);
+
+                $this->setProperty($name, $type, true, true);
                 $this->setMethod(
                     Str::camel("where_" . $name),
                     '\Illuminate\Database\Query\Builder|\\' . get_class($model),
@@ -359,9 +361,8 @@ class ModelsCommand extends Command
      * @param string|null $type
      * @param bool|null $read
      * @param bool|null $write
-     * @param string|null $comment
      */
-    protected function setProperty($name, $type = null, $read = null, $write = null,$comment=null)
+    protected function setProperty($name, $type = null, $read = null, $write = null)
     {
         if (!isset($this->properties[$name])) {
             $this->properties[$name] = array();
@@ -377,9 +378,6 @@ class ModelsCommand extends Command
         }
         if ($write !== null) {
             $this->properties[$name]['write'] = $write;
-        }
-        if ($comment !== null ) {
-            $this->properties[$name]['comment'] = $comment;
         }
     }
 
@@ -437,8 +435,7 @@ class ModelsCommand extends Command
             } else {
                 $attr = 'property-read';
             }
-            $comment = isset($property['comment'])?$property['comment']:'';
-            $tag = Tag::createInstance("@{$attr} {$property['type']} {$name} {$comment}", $phpdoc);
+            $tag = Tag::createInstance("@{$attr} {$property['type']} {$name}", $phpdoc);
             $phpdoc->appendTag($tag);
         }
 
