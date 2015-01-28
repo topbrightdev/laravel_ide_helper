@@ -47,9 +47,9 @@ class Generator
         // Find the drivers to add to the extra/interfaces
         $this->detectDrivers();
 
-        $this->extra = array_merge($this->extra, $this->config->get('laravel-ide-helper::extra'));
-        $this->magic = array_merge($this->magic, $this->config->get('laravel-ide-helper::magic'));
-        $this->interfaces = array_merge($this->interfaces, $this->config->get('laravel-ide-helper::interfaces'));
+        $this->extra = array_merge($this->extra, $this->config->get('ide-helper.extra'));
+        $this->magic = array_merge($this->magic, $this->config->get('ide-helper.magic'));
+        $this->interfaces = array_merge($this->interfaces, $this->config->get('ide-helper.interfaces'));
         // Make all interface classes absolute
         foreach ($this->interfaces as &$interface) {
             $interface = '\\' . ltrim($interface, '\\');
@@ -77,7 +77,7 @@ class Generator
     public function generatePhpHelper()
     {
         $app = app();
-        return $this->view->make('laravel-ide-helper::ide-helper')
+        return $this->view->make('ide-helper::helper')
             ->with('namespaces', $this->getNamespaces())
             ->with('helpers', $this->helpers)
             ->with('version', $app::VERSION)
@@ -114,7 +114,7 @@ class Generator
     protected function detectDrivers()
     {
         try{
-            if (class_exists('Auth') && method_exists('Auth', 'driver')) {
+            if (class_exists('Auth')) {
                 $class = get_class(\Auth::driver());
                 $this->extra['Auth'] = array($class);
                 $this->interfaces['\Illuminate\Auth\UserProviderInterface'] = $class;
