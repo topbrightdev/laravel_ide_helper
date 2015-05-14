@@ -226,12 +226,7 @@ class ModelsCommand extends Command
             $databasePlatform->registerDoctrineTypeMapping($yourTypeName, $doctrineTypeName);
         }
 
-        $database = null;
-        if (strpos($table, '.')) {
-            list($database, $table) = explode('.', $table);
-        }
-
-        $columns = $schema->listTableColumns($table, $database);
+        $columns = $schema->listTableColumns($table);
 
         if ($columns) {
             foreach ($columns as $column) {
@@ -345,7 +340,7 @@ class ModelsCommand extends Command
                         $search = '$this->' . $relation . '(';
                         if ($pos = stripos($code, $search)) {
                             $code = substr($code, $pos + strlen($search));
-                            $arguments = explode(',', substr($code, 0, strpos($code, ');')));
+                            $arguments = explode(',', substr($code, 0, strpos($code, ')')));
                             //Remove quotes, ensure 1 \ in front of the model
                             $returnModel = $this->getClassName($arguments[0], $model);
                             if ($relation === "belongsToMany" or $relation === 'hasMany' or $relation === 'morphMany' or $relation === 'morphToMany') {
