@@ -11,8 +11,8 @@
 namespace Barryvdh\LaravelIdeHelper;
 
 use Illuminate\Foundation\AliasLoader;
-use Illuminate\Foundation\Application;
 use Illuminate\Config\Repository as ConfigRepository;
+use ReflectionClass;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class Generator
@@ -117,8 +117,14 @@ class Generator
         $this->interfaces['\Illuminate\Contracts\Auth\Authenticatable'] = config('auth.model', 'App\User');
         
         try{
-            if (class_exists('Auth', false) && is_a('Auth', '\Illuminate\Support\Facades\Auth', true)) {
-                $authMethod = version_compare(Application::VERSION, '5.2', '>=') ? 'guard' : 'driver';
+            if (class_exists('Auth') && is_a('Auth', '\Illuminate\Support\Facades\Auth', true)) {
+				if (class_exists('\Illuminate\Foundation\Application')) {
+					$authMethod = version_compare(\Illuminate\Foundation\Application::VERSION, '5.2', '>=') ? 'guard' : 'driver';
+				} else {
+                    $refClass = new ReflectionClass('\Laravel\Lumen\Application');
+                    $versionStr = $refClass->newInstanceWithoutConstructor()->version();
+					$authMethod = strpos($versionStr, 'Lumen (5.0') === 0 ? 'driver' : (strpos($versionStr, 'Lumen (5.1') === 0 ? 'driver' : 'guard');
+				}
                 $class = get_class(\Auth::$authMethod());
                 $this->extra['Auth'] = array($class);
                 $this->interfaces['\Illuminate\Auth\UserProviderInterface'] = $class;
@@ -126,7 +132,7 @@ class Generator
         }catch (\Exception $e) {}
 
         try{
-            if (class_exists('DB', false) && is_a('DB', '\Illuminate\Support\Facades\DB', true)) {
+            if (class_exists('DB') && is_a('DB', '\Illuminate\Support\Facades\DB', true)) {
                 $class = get_class(\DB::connection());
                 $this->extra['DB'] = array($class);
                 $this->interfaces['\Illuminate\Database\ConnectionInterface'] = $class;
@@ -134,7 +140,7 @@ class Generator
         }catch (\Exception $e) {}
 
         try{
-            if (class_exists('Cache', false) && is_a('Cache', '\Illuminate\Support\Facades\Cache', true)) {
+            if (class_exists('Cache') && is_a('Cache', '\Illuminate\Support\Facades\Cache', true)) {
                 $driver = get_class(\Cache::driver());
                 $store = get_class(\Cache::getStore());
                 $this->extra['Cache'] = array($driver, $store);
@@ -143,7 +149,7 @@ class Generator
         }catch (\Exception $e) {}
 
         try{
-            if (class_exists('Queue', false) && is_a('Queue', '\Illuminate\Support\Facades\Queue', true)) {
+            if (class_exists('Queue') && is_a('Queue', '\Illuminate\Support\Facades\Queue', true)) {
                 $class = get_class(\Queue::connection());
                 $this->extra['Queue'] = array($class);
                 $this->interfaces['\Illuminate\Queue\QueueInterface'] = $class;
@@ -151,7 +157,7 @@ class Generator
         }catch (\Exception $e) {}
 
         try{
-            if (class_exists('SSH', false) && is_a('SSH', '\Illuminate\Support\Facades\SSH', true)){
+            if (class_exists('SSH') && is_a('SSH', '\Illuminate\Support\Facades\SSH', true)){
                 $class = get_class(\SSH::connection());
                 $this->extra['SSH'] = array($class);
                 $this->interfaces['\Illuminate\Remote\ConnectionInterface'] = $class;
