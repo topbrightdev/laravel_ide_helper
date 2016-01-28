@@ -184,7 +184,8 @@ class ModelsCommand extends Command
                     }
 
                     if (!$reflectionClass->IsInstantiable()) {
-                        throw new \Exception($name . ' is not instantiable.');
+                        // ignore abstract class or interface
+                        continue;
                     }
 
                     $model = $this->laravel->make($name);
@@ -290,17 +291,6 @@ class ModelsCommand extends Command
 
                 $comment = $column->getComment();
                 $this->setProperty($name, $type, true, true, $comment);
-                /*
-                    Only add whereXXX() helper function comment to _ide_helper_models.php,
-                    keep model file as simple as possible.
-                */
-                if (!$this->write) {
-                    $this->setMethod(
-                        Str::camel("where_" . $name),
-                        '\Illuminate\Database\Query\Builder|\\' . get_class($model),
-                        array('$value')
-                    );
-                }
             }
         }
     }
