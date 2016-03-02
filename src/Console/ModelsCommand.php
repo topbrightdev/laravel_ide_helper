@@ -291,6 +291,7 @@ class ModelsCommand extends Command
 
                 $comment = $column->getComment();
                 $this->setProperty($name, $type, true, true, $comment);
+                $this->setMethod(Str::camel("where_" . $name), '\Illuminate\Database\Query\Builder|\\' . get_class($model), array('$value'));
             }
         }
     }
@@ -485,6 +486,10 @@ class ModelsCommand extends Command
             $phpdoc->appendTag($tag);
         }
 
+        if ($this->write) {
+            $phpdoc->appendTag(Tag::createInstance("@mixin \\Eloquent", $phpdoc));
+        }
+
         $serializer = new DocBlockSerializer();
         $serializer->getDocComment($phpdoc);
         $docComment = $serializer->getDocComment($phpdoc);
@@ -508,7 +513,7 @@ class ModelsCommand extends Command
             }
         }
 
-        $output = "namespace {$namespace}{\n{$docComment}\n\tclass {$classname} {}\n}\n\n";
+        $output = "namespace {$namespace}{\n{$docComment}\n\tclass {$classname} extends \Eloquent {}\n}\n\n";
         return $output;
     }
 
