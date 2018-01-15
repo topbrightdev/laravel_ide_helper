@@ -277,7 +277,7 @@ class ModelsCommand extends Command
                     break;
                 case 'date':
                 case 'datetime':
-                    $realType = '\Illuminate\Support\Carbon';
+                    $realType = '\Carbon\Carbon';
                     break;
                 case 'collection':
                     $realType = '\Illuminate\Support\Collection';
@@ -337,7 +337,7 @@ class ModelsCommand extends Command
             foreach ($columns as $column) {
                 $name = $column->getName();
                 if (in_array($name, $model->getDates())) {
-                    $type = '\Illuminate\Support\Carbon';
+                    $type = '\Carbon\Carbon';
                 } else {
                     $type = $column->getType()->getName();
                     switch ($type) {
