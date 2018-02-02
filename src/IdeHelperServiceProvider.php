@@ -10,11 +10,10 @@
 
 namespace Barryvdh\LaravelIdeHelper;
 
-use Barryvdh\LaravelIdeHelper\Console\EloquentCommand;
-use Barryvdh\LaravelIdeHelper\Console\GeneratorCommand;
+use Illuminate\Support\ServiceProvider;
 use Barryvdh\LaravelIdeHelper\Console\MetaCommand;
 use Barryvdh\LaravelIdeHelper\Console\ModelsCommand;
-use Illuminate\Support\ServiceProvider;
+use Barryvdh\LaravelIdeHelper\Console\GeneratorCommand;
 use Illuminate\View\Engines\EngineResolver;
 use Illuminate\View\Engines\PhpEngine;
 use Illuminate\View\Factory;
@@ -39,7 +38,7 @@ class IdeHelperServiceProvider extends ServiceProvider
     {
         $viewPath = __DIR__.'/../resources/views';
         $this->loadViewsFrom($viewPath, 'ide-helper');
-
+        
         $configPath = __DIR__ . '/../config/ide-helper.php';
         if (function_exists('config_path')) {
             $publishPath = config_path('ide-helper.php');
@@ -59,7 +58,7 @@ class IdeHelperServiceProvider extends ServiceProvider
         $configPath = __DIR__ . '/../config/ide-helper.php';
         $this->mergeConfigFrom($configPath, 'ide-helper');
         $localViewFactory = $this->createLocalViewFactory();
-
+        
         $this->app->singleton(
             'command.ide-helper.generate',
             function ($app) use ($localViewFactory) {
@@ -73,27 +72,15 @@ class IdeHelperServiceProvider extends ServiceProvider
                 return new ModelsCommand($app['files']);
             }
         );
-
+        
         $this->app->singleton(
             'command.ide-helper.meta',
             function ($app) use ($localViewFactory) {
-                return new MetaCommand($app['files'], $localViewFactory, $app['config']);
+                return new MetaCommand($app['files'], $localViewFactory);
             }
         );
 
-        $this->app->singleton(
-            'command.ide-helper.eloquent',
-            function ($app) use ($localViewFactory) {
-                return new EloquentCommand($app['files']);
-            }
-        );
-
-        $this->commands(
-            'command.ide-helper.generate',
-            'command.ide-helper.models',
-            'command.ide-helper.meta',
-            'command.ide-helper.eloquent'
-        );
+        $this->commands('command.ide-helper.generate', 'command.ide-helper.models', 'command.ide-helper.meta');
     }
 
     /**

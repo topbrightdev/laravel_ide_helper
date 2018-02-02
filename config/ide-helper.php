@@ -13,8 +13,6 @@ return array(
 
     'filename'  => '_ide_helper',
     'format'    => 'php',
-    
-    'meta_filename' => '.phpstorm.meta.php',
 
     /*
     |--------------------------------------------------------------------------

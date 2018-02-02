@@ -2,20 +2,20 @@
 
 /**
  * A helper file for Laravel 5, to provide autocomplete information to your IDE
- * Generated for Laravel <?= $version ?> on <?= date("Y-m-d H:i:s") ?>.
- *
- * This file should not be included in your code, only analyzed by your IDE!
+ * Generated for Laravel <?= $version ?> on <?= date("Y-m-d") ?>.
  *
  * @author Barry vd. Heuvel <barryvdh@gmail.com>
  * @see https://github.com/barryvdh/laravel-ide-helper
  */
+namespace  {
+    exit("This file should not be included, only analyzed by your IDE");
+}
 
 <?php foreach($namespaces_by_extends_ns as $namespace => $aliases): ?>
 <?php if ($namespace == '\Illuminate\Database\Eloquent'): continue; endif; ?>
 namespace <?= $namespace == '__root' ? '' : trim($namespace, '\\') ?> { 
 <?php foreach($aliases as $alias): ?>
 
-    <?= trim($alias->getDocComment('    ')) ?> 
     <?= $alias->getClassType() ?> <?= $alias->getExtendsClass() ?> {
         <?php foreach($alias->getMethods() as $method): ?>
 

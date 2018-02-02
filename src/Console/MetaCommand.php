@@ -28,6 +28,7 @@ class MetaCommand extends Command
      * @var string
      */
     protected $name = 'ide-helper:meta';
+    protected $filename = '.phpstorm.meta.php';
 
     /**
      * The console command description.
@@ -41,9 +42,6 @@ class MetaCommand extends Command
 
     /** @var \Illuminate\Contracts\View\Factory */
     protected $view;
-
-    /** @var \Illuminate\Contracts\Config */
-    protected $config;
 
     protected $methods = [
       'new \Illuminate\Contracts\Container\Container',
@@ -59,13 +57,11 @@ class MetaCommand extends Command
      *
      * @param \Illuminate\Contracts\Filesystem\Filesystem $files
      * @param \Illuminate\Contracts\View\Factory $view
-     * @param \Illuminate\Contracts\Config $config
      */
-    public function __construct($files, $view, $config)
+    public function __construct($files, $view)
     {
         $this->files = $files;
         $this->view = $view;
-        $this->config = $config;
         parent::__construct();
     }
 
@@ -142,10 +138,8 @@ class MetaCommand extends Command
      */
     protected function getOptions()
     {
-        $filename = $this->config->get('ide-helper.meta_filename');
-
         return array(
-            array('filename', 'F', InputOption::VALUE_OPTIONAL, 'The path to the meta file', $filename),
+            array('filename', 'F', InputOption::VALUE_OPTIONAL, 'The path to the meta file', $this->filename),
         );
     }
 }

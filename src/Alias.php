@@ -10,11 +10,6 @@
 
 namespace Barryvdh\LaravelIdeHelper;
 
-use Barryvdh\Reflection\DocBlock;
-use Barryvdh\Reflection\DocBlock\Context;
-use Barryvdh\Reflection\DocBlock\Serializer as DocBlockSerializer;
-use ReflectionClass;
-
 class Alias
 {
     protected $alias;
@@ -32,7 +27,6 @@ class Alias
     protected $valid = false;
     protected $magicMethods = array();
     protected $interfaces = array();
-    protected $phpdoc = null;
 
     /**
      * @param string $alias
@@ -62,13 +56,7 @@ class Alias
         $this->detectNamespace();
         $this->detectClassType();
         $this->detectExtendsNamespace();
-
-        if(!empty($this->namespace)) {
-            //Create a DocBlock and serializer instance
-            $this->phpdoc = new DocBlock(new ReflectionClass($alias), new Context($this->namespace));
-        }
-
-
+        
         if ($facade === '\Illuminate\Database\Eloquent\Model') {
             $this->usedMethods = array('decrement', 'increment');
         }
@@ -331,10 +319,9 @@ class Alias
                 $properties = $reflection->getStaticProperties();
                 $macros = isset($properties['macros']) ? $properties['macros'] : [];
                 foreach ($macros as $macro_name => $macro_func) {
-                    $function = new \ReflectionFunction($macro_func);
                     // Add macros
                     $this->methods[] = new Macro(
-                        $function,
+                        $this->getMacroFunction($macro_func),
                         $this->alias,
                         $reflection,
                         $macro_name,
@@ -346,15 +333,18 @@ class Alias
     }
 
     /**
-     * Get the docblock for this alias
+     * @param $macro_func
      *
-     * @param string $prefix
-     * @return mixed
+     * @return \ReflectionFunctionAbstract
+     * @throws \ReflectionException
      */
-    public function getDocComment($prefix = "\t\t")
+    protected function getMacroFunction($macro_func)
     {
-        $serializer = new DocBlockSerializer(1, $prefix);
-        return ($this->phpdoc) ? $serializer->getDocComment($this->phpdoc) : '';
+        if (is_array($macro_func) && is_callable($macro_func)) {
+            return new \ReflectionMethod($macro_func[0], $macro_func[1]);
+        }
+
+        return new \ReflectionFunction($macro_func);
     }
 
     /**
