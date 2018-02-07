@@ -319,9 +319,10 @@ class Alias
                 $properties = $reflection->getStaticProperties();
                 $macros = isset($properties['macros']) ? $properties['macros'] : [];
                 foreach ($macros as $macro_name => $macro_func) {
+                    $function = new \ReflectionFunction($macro_func);
                     // Add macros
                     $this->methods[] = new Macro(
-                        $this->getMacroFunction($macro_func),
+                        $function,
                         $this->alias,
                         $reflection,
                         $macro_name,
@@ -330,21 +331,6 @@ class Alias
                 }
             }
         }
-    }
-
-    /**
-     * @param $macro_func
-     *
-     * @return \ReflectionFunctionAbstract
-     * @throws \ReflectionException
-     */
-    protected function getMacroFunction($macro_func)
-    {
-        if (is_array($macro_func) && is_callable($macro_func)) {
-            return new \ReflectionMethod($macro_func[0], $macro_func[1]);
-        }
-
-        return new \ReflectionFunction($macro_func);
     }
 
     /**
