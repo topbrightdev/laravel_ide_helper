@@ -145,6 +145,7 @@ class ModelsCommand extends Command
 
 
         $output = "<?php
+//@formatter:off
 /**
  * A helper file for your Eloquent Models
  * Copy the phpDocs from this file to the correct Model,
@@ -460,8 +461,7 @@ class ModelsCommand extends Command
                                'morphOne',
                                'morphTo',
                                'morphMany',
-                               'morphToMany',
-                               'morphedByMany'
+                               'morphToMany'
                              ) as $relation) {
                         $search = '$this->' . $relation . '(';
                         if ($pos = stripos($code, $search)) {
@@ -471,14 +471,7 @@ class ModelsCommand extends Command
                             if ($relationObj instanceof Relation) {
                                 $relatedModel = '\\' . get_class($relationObj->getRelated());
 
-                                $relations = [
-                                    'hasManyThrough',
-                                    'belongsToMany',
-                                    'hasMany',
-                                    'morphMany',
-                                    'morphToMany',
-                                    'morphedByMany',
-                                ];
+                                $relations = ['hasManyThrough', 'belongsToMany', 'hasMany', 'morphMany', 'morphToMany'];
                                 if (in_array($relation, $relations)) {
                                     //Collection or array of models (because Collection is Arrayable)
                                     $this->setProperty(
