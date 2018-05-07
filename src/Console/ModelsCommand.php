@@ -95,7 +95,7 @@ class ModelsCommand extends Command
         //If filename is default and Write is not specified, ask what to do
         if (!$this->write && $filename === $this->filename && !$this->option('nowrite')) {
             if ($this->confirm(
-                "Do you want to overwrite the existing model files? Choose no to write to $filename instead? (Yes/No): "
+                "Do you want to overwrite the existing model files? Choose no to write to $filename instead?"
             )
             ) {
                 $this->write = true;
@@ -297,6 +297,10 @@ class ModelsCommand extends Command
                 continue;
             } else {
                 $this->properties[$name]['type'] = $this->getTypeOverride($realType);
+
+                if (isset($this->nullableColumns[$name])) {
+                    $this->properties[$name]['type'] .= '|null';
+                }                
             }
         }
     }
