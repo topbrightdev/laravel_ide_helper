@@ -1,4 +1,10 @@
 <?= '<?php' ?>
+<?php
+/** @var \Barryvdh\LaravelIdeHelper\Alias[][] $namespaces_by_alias_ns */
+/** @var \Barryvdh\LaravelIdeHelper\Alias[][] $namespaces_by_extends_ns */
+/** @var bool $include_fluent */
+/** @var string $helpers */
+?>
 
 // @formatter:off
 
@@ -28,7 +34,7 @@ namespace <?= $namespace == '__root' ? '' : trim($namespace, '\\') ?> {
             //Method inherited from <?= $method->getDeclaringClass() ?>
             <?php endif; ?>
 
-            <?= $method->shouldReturn() ? 'return ': '' ?><?= $method->getRoot() ?>::<?= $method->getRealName() ?>(<?= $method->getParams() ?>);
+            <?= $method->shouldReturn() ? 'return ': '' ?><?= $method->getRoot() ?>::<?= $method->getName() ?>(<?= $method->getParams() ?>);
         }
         <?php endforeach; ?> 
     }
