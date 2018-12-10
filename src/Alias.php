@@ -357,17 +357,14 @@ class Alias
                 $properties = $reflection->getStaticProperties();
                 $macros = isset($properties['macros']) ? $properties['macros'] : [];
                 foreach ($macros as $macro_name => $macro_func) {
-                    if (!in_array($macro_name, $this->usedMethods)) {
-                        // Add macros
-                        $this->methods[] = new Macro(
-                            $this->getMacroFunction($macro_func),
-                            $this->alias,
-                            $reflection,
-                            $macro_name,
-                            $this->interfaces
-                        );
-                        $this->usedMethods[] = $macro_name;
-                    }
+                    // Add macros
+                    $this->methods[] = new Macro(
+                        $this->getMacroFunction($macro_func),
+                        $this->alias,
+                        $reflection,
+                        $macro_name,
+                        $this->interfaces
+                    );
                 }
             }
         }
