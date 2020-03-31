@@ -329,7 +329,7 @@ class Method
                 } elseif (is_resource($default)) {
                     //skip to not fail
                 } else {
-                    $default = var_export($default, true);
+                    $default = "'" . trim($default) . "'";
                 }
                 $paramStr .= " = $default";
             }
