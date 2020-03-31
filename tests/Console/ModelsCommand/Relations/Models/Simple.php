@@ -26,11 +26,6 @@ class Simple extends Model
         return $this->hasOne(Simple::class);
     }
 
-    public function relationHasOneWithDefault(): HasOne
-    {
-        return $this->hasOne(Simple::class)->withDefault();
-    }
-
     public function relationBelongsTo(): BelongsTo
     {
         return $this->belongsTo(Simple::class);

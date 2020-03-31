@@ -563,7 +563,7 @@ class ModelsCommand extends Command
                                         true,
                                         null,
                                         '',
-                                        $this->isRelationNullable($relation, $relationObj)
+                                        $this->isRelationForeignKeyNullable($relationObj)
                                     );
                                 }
                             }
@@ -575,32 +575,22 @@ class ModelsCommand extends Command
     }
 
     /**
-     * Check if the relation is nullable
+     * Check if the foreign key of the relation is nullable
      *
-     * @param string   $relation
-     * @param Relation $relationObj
+     * @param Relation $relation
      *
      * @return bool
      */
-    private function isRelationNullable(string $relation, Relation $relationObj): bool
+    private function isRelationForeignKeyNullable(Relation $relation)
     {
-        $reflectionObj = new \ReflectionObject($relationObj);
-
-        if (in_array($relation, ['hasOne', 'hasOneThrough', 'morphOne'], true)) {
-            $defaultProp = $reflectionObj->getProperty('withDefault');
-            $defaultProp->setAccessible(true);
-
-            return !$defaultProp->getValue($relationObj);
-        }
-
+        $reflectionObj = new \ReflectionObject($relation);
         if (!$reflectionObj->hasProperty('foreignKey')) {
             return false;
         }
-
         $fkProp = $reflectionObj->getProperty('foreignKey');
         $fkProp->setAccessible(true);
 
-        return isset($this->nullableColumns[$fkProp->getValue($relationObj)]);
+        return isset($this->nullableColumns[$fkProp->getValue($relation)]);
     }
 
     /**
