@@ -10,19 +10,19 @@
 
 namespace Barryvdh\LaravelIdeHelper\Console;
 
+use Barryvdh\Reflection\DocBlock;
+use Barryvdh\Reflection\DocBlock\Context;
+use Barryvdh\Reflection\DocBlock\Serializer as DocBlockSerializer;
+use Barryvdh\Reflection\DocBlock\Tag;
 use Composer\Autoload\ClassMapGenerator;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Str;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Str;
 use ReflectionClass;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Barryvdh\Reflection\DocBlock;
-use Barryvdh\Reflection\DocBlock\Context;
-use Barryvdh\Reflection\DocBlock\Tag;
-use Barryvdh\Reflection\DocBlock\Serializer as DocBlockSerializer;
 
 /**
  * A command to generate autocomplete information for your IDE
@@ -438,7 +438,7 @@ class ModelsCommand extends Command
                     $name = Str::snake(substr($method, 3, -9));
                     if (!empty($name)) {
                         $reflection = new \ReflectionMethod($model, $method);
-                        $type = $this->getReturnTypeFromDocBlock($reflection);
+                        $type = $this->getReturnType($reflection);
                         $this->setProperty($name, $type, true, null);
                     }
                 } elseif (Str::startsWith($method, 'set') && Str::endsWith(
@@ -563,7 +563,7 @@ class ModelsCommand extends Command
                                         true,
                                         null,
                                         '',
-                                        $this->isRelationForeignKeyNullable($relationObj)
+                                        $this->isRelationNullable($relation, $relationObj)
                                     );
                                 }
                             }
@@ -575,22 +575,32 @@ class ModelsCommand extends Command
     }
 
     /**
-     * Check if the foreign key of the relation is nullable
+     * Check if the relation is nullable
      *
-     * @param Relation $relation
+     * @param string   $relation
+     * @param Relation $relationObj
      *
      * @return bool
      */
-    private function isRelationForeignKeyNullable(Relation $relation)
+    private function isRelationNullable(string $relation, Relation $relationObj): bool
     {
-        $reflectionObj = new \ReflectionObject($relation);
+        $reflectionObj = new \ReflectionObject($relationObj);
+
+        if (in_array($relation, ['hasOne', 'hasOneThrough', 'morphOne'], true)) {
+            $defaultProp = $reflectionObj->getProperty('withDefault');
+            $defaultProp->setAccessible(true);
+
+            return !$defaultProp->getValue($relationObj);
+        }
+
         if (!$reflectionObj->hasProperty('foreignKey')) {
             return false;
         }
+
         $fkProp = $reflectionObj->getProperty('foreignKey');
         $fkProp->setAccessible(true);
 
-        return isset($this->nullableColumns[$fkProp->getValue($relation)]);
+        return isset($this->nullableColumns[$fkProp->getValue($relationObj)]);
     }
 
     /**
@@ -804,6 +814,16 @@ class ModelsCommand extends Command
         return $this->laravel['config']->get('ide-helper.model_camel_case_properties', false);
     }
 
+    protected function getReturnType(\ReflectionMethod $reflection): ?string
+    {
+        $type = $this->getReturnTypeFromDocBlock($reflection);
+        if ($type) {
+            return $type;
+        }
+
+        return $this->getReturnTypeFromReflection($reflection);
+    }
+
     /**
      * Get method return type based on it DocBlock comment
      *
@@ -822,6 +842,29 @@ class ModelsCommand extends Command
 
         return $type;
     }
+
+    protected function getReturnTypeFromReflection(\ReflectionMethod $reflection): ?string
+    {
+        $returnType = $reflection->getReturnType();
+        if (!$returnType) {
+            return null;
+        }
+
+        $type = $returnType instanceof \ReflectionNamedType
+            ? $returnType->getName()
+            : (string)$returnType;
+
+        if (!$returnType->isBuiltin()) {
+            $type = '\\' . $type;
+        }
+
+        if ($returnType->allowsNull()) {
+            $type .= '|null';
+        }
+
+        return $type;
+    }
+
 
     /**
      * Generates methods provided by the SoftDeletes trait
