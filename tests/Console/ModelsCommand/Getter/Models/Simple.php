@@ -47,58 +47,11 @@ class Simple extends Model
     {
     }
 
-    public function getAttributeReturnsImportedClassAttribute(): DateTime
+    public function getAttributeReturnsImportedClass(): DateTime
     {
     }
 
-    public function getAttributeReturnsFqnClassAttribute(): \Illuminate\Support\Facades\Date
-    {
-    }
-
-    public function getAttributeReturnsArrayAttribute(): array
-    {
-    }
-
-    public function getAttributeReturnsNullableArrayAttribute(): ?array
-    {
-    }
-
-    public function getAttributeReturnsStdClassAttribute(): \stdClass
-    {
-    }
-
-    public function getAttributeReturnsNullableStdClassAttribute(): ?\stdClass
-    {
-    }
-
-    public function getAttributeReturnsBoolAttribute(): bool
-    {
-    }
-
-    public function getAttributeReturnsNullableBoolAttribute(): ?bool
-    {
-    }
-
-    public function getAttributeReturnsFloatAttribute(): bool
-    {
-    }
-
-    public function getAttributeReturnsNullableFloatAttribute(): ?bool
-    {
-    }
-
-    public function getAttributeReturnsCallableAttribute(): callable
-    {
-    }
-
-    public function getAttributeReturnsNullableCallableAttribute(): ?callable
-    {
-    }
-
-    /**
-     * Doesn't make sense, but…
-     */
-    public function getAttributeReturnsVoidAttribute(): void
+    public function getAttributeReturnsFqnClass(): \Illuminate\Support\Facades\Date
     {
     }
 }
