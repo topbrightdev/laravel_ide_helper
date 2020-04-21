@@ -10,20 +10,20 @@
 
 namespace Barryvdh\LaravelIdeHelper\Console;
 
+use Barryvdh\Reflection\DocBlock;
+use Barryvdh\Reflection\DocBlock\Context;
+use Barryvdh\Reflection\DocBlock\Serializer as DocBlockSerializer;
+use Barryvdh\Reflection\DocBlock\Tag;
 use Composer\Autoload\ClassMapGenerator;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Str;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Str;
 use ReflectionClass;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Barryvdh\Reflection\DocBlock;
-use Barryvdh\Reflection\DocBlock\Context;
-use Barryvdh\Reflection\DocBlock\Tag;
-use Barryvdh\Reflection\DocBlock\Serializer as DocBlockSerializer;
 
 /**
  * A command to generate autocomplete information for your IDE
@@ -59,6 +59,7 @@ class ModelsCommand extends Command
     protected $dirs = array();
     protected $reset;
     protected $keep_text;
+    protected $phpstorm_noinspections;
     /**
      * @var bool[string]
      */
@@ -97,6 +98,7 @@ class ModelsCommand extends Command
         $model = $this->argument('model');
         $ignore = $this->option('ignore');
         $this->reset = $this->option('reset');
+        $this->phpstorm_noinspections = $this->option('phpstorm-noinspections');
         if ($this->option('smart-reset')) {
             $this->keep_text = $this->reset = true;
         }
@@ -155,6 +157,10 @@ class ModelsCommand extends Command
           array('nowrite', 'N', InputOption::VALUE_NONE, 'Don\'t write to Model file'),
           array('reset', 'R', InputOption::VALUE_NONE, 'Remove the original phpdocs instead of appending'),
           array('smart-reset', 'r', InputOption::VALUE_NONE, 'Refresh the properties/methods list, but keep the text'),
+          array('phpstorm-noinspections', 'p', InputOption::VALUE_NONE,
+              'Add PhpFullyQualifiedNameUsageInspection and PhpUnnecessaryFullyQualifiedNameInspection PHPStorm ' .
+              'noinspection tags'
+          ),
           array('ignore', 'I', InputOption::VALUE_OPTIONAL, 'Which models to ignore', ''),
         );
     }
@@ -440,7 +446,7 @@ class ModelsCommand extends Command
                     $name = Str::snake(substr($method, 3, -9));
                     if (!empty($name)) {
                         $reflection = new \ReflectionMethod($model, $method);
-                        $type = $this->getReturnTypeFromDocBlock($reflection);
+                        $type = $this->getReturnType($reflection);
                         $this->setProperty($name, $type, true, null);
                     }
                 } elseif (Str::startsWith($method, 'set') && Str::endsWith(
@@ -728,6 +734,20 @@ class ModelsCommand extends Command
         if ($this->write && ! $phpdoc->getTagsByName('mixin')) {
             $phpdoc->appendTag(Tag::createInstance("@mixin \\Eloquent", $phpdoc));
         }
+        if ($this->phpstorm_noinspections) {
+            /**
+             * Facades, Eloquent API
+             * @see https://www.jetbrains.com/help/phpstorm/php-fully-qualified-name-usage.html
+             */
+            $phpdoc->appendTag(Tag::createInstance("@noinspection PhpFullyQualifiedNameUsageInspection", $phpdoc));
+            /**
+             * Relations, other models in the same namespace
+             * @see https://www.jetbrains.com/help/phpstorm/php-unnecessary-fully-qualified-name.html
+             */
+            $phpdoc->appendTag(
+                Tag::createInstance("@noinspection PhpUnnecessaryFullyQualifiedNameInspection", $phpdoc)
+            );
+        }
 
         $serializer = new DocBlockSerializer();
         $serializer->getDocComment($phpdoc);
@@ -826,6 +846,16 @@ class ModelsCommand extends Command
         return $this->laravel['config']->get('ide-helper.model_camel_case_properties', false);
     }
 
+    protected function getReturnType(\ReflectionMethod $reflection): ?string
+    {
+        $type = $this->getReturnTypeFromDocBlock($reflection);
+        if ($type) {
+            return $type;
+        }
+
+        return $this->getReturnTypeFromReflection($reflection);
+    }
+
     /**
      * Get method return type based on it DocBlock comment
      *
@@ -844,6 +874,29 @@ class ModelsCommand extends Command
 
         return $type;
     }
+
+    protected function getReturnTypeFromReflection(\ReflectionMethod $reflection): ?string
+    {
+        $returnType = $reflection->getReturnType();
+        if (!$returnType) {
+            return null;
+        }
+
+        $type = $returnType instanceof \ReflectionNamedType
+            ? $returnType->getName()
+            : (string)$returnType;
+
+        if (!$returnType->isBuiltin()) {
+            $type = '\\' . $type;
+        }
+
+        if ($returnType->allowsNull()) {
+            $type .= '|null';
+        }
+
+        return $type;
+    }
+
 
     /**
      * Generates methods provided by the SoftDeletes trait
