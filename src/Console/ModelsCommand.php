@@ -749,7 +749,7 @@ class ModelsCommand extends Command
         }
     }
 
-    public function setMethod($name, $type = '', $arguments = [], $comment = '')
+    protected function setMethod($name, $type = '', $arguments = [], $comment = '')
     {
         $methods = array_change_key_case($this->methods, CASE_LOWER);
 
@@ -759,16 +759,6 @@ class ModelsCommand extends Command
             $this->methods[$name]['arguments'] = $arguments;
             $this->methods[$name]['comment'] = $comment;
         }
-    }
-
-    public function unsetMethod($name) {
-        unset($this->methods[strtolower($name)]);
-    }
-
-    public function getMethodType(Model $model, string $classType) {
-        $modelName = $this->getClassNameInDestinationFile($model, get_class($model));
-        $builder = $this->getClassNameInDestinationFile($model, $classType);
-        return $builder . '|' . $modelName;
     }
 
     /**
@@ -1101,18 +1091,17 @@ class ModelsCommand extends Command
             return;
         }
 
-        $traits = class_uses(get_class($model), true);
+        $modelName = get_class($model);
+
+        $traits = class_uses($modelName, true);
         if (!in_array('Illuminate\\Database\\Eloquent\\Factories\\HasFactory', $traits)) {
             return;
         }
 
-        $modelName = get_class($model);
-        $modelBaseName = class_basename($modelName);
-
-        $factory = "\Database\Factories\\{$modelBaseName}Factory";
-
         if ($modelName::newFactory()) {
             $factory = get_class($modelName::newFactory());
+        } else {
+            $factory = Factory::resolveFactoryName($modelName);
         }
 
         $factory = '\\' . trim($factory, '\\');
